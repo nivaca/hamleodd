@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" 
+  xmlns:sch="http://purl.oclc.org/dsdl/schematron"
+  xml:lang="en">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Bilingual Drama TEI ODD</title>
+        <author>Custom TEI Schema</author>
+      </titleStmt>
+      <publicationStmt>
+        <p>Custom TEI ODD for bilingual dramatic texts with English/Spanish correspondence rules</p>
+      </publicationStmt>
+      <sourceDesc>
+        <p>Born digital</p>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <!-- Schema module selection - using tei_all as base -->
+      <schemaSpec ident="tei_bilingual_drama" start="TEI">
+        <desc>TEI ODD for Bilingual Drama. This ODD customizes TEI All to enforce specific rules for bilingual dramatic texts with English and Spanish correspondence between speech and stage elements.</desc>
+        
+        <moduleRef key="tei"/>
+        <moduleRef key="core"/>
+        <moduleRef key="analysis"/>
+        <moduleRef key="certainty"/>
+        <moduleRef key="corpus"/>
+        <moduleRef key="dictionaries"/>
+        <moduleRef key="drama"/>
+        <moduleRef key="figures"/>
+        <moduleRef key="gaiji"/>
+        <moduleRef key="header"/>
+        <moduleRef key="iso-fs"/>
+        <moduleRef key="linking"/>
+        <moduleRef key="msdescription"/>
+        <moduleRef key="namesdates"/>
+        <moduleRef key="nets"/>
+        <moduleRef key="spoken"/>
+        <moduleRef key="tagdocs"/>
+        <moduleRef key="textcrit"/>
+        <moduleRef key="textstructure"/>
+        <moduleRef key="transcr"/>
+        <moduleRef key="verse"/>
+        
+        <!-- Customization of sp element -->
+        <elementSpec ident="sp" mode="change">
+          <desc>Speech element customized to require bilingual correspondence attributes</desc>
+          <attList>
+            <!-- Make xml:lang required with restricted values -->
+            <attDef ident="xml:lang" mode="change" usage="req">
+              <desc>Language code restricted to English (eng) or Spanish (spa)</desc>
+              <valList type="closed">
+                <valItem ident="eng"/>
+                <valItem ident="spa"/>
+              </valList>
+            </attDef>
+            <!-- Make xml:id required -->
+            <attDef ident="xml:id" mode="change" usage="req">
+              <desc>Unique identifier required for correspondence linking</desc>
+            </attDef>
+            <!-- Make corresp required -->
+            <attDef ident="corresp" mode="change" usage="req">
+              <desc>Correspondence reference to parallel element in other language, must begin with #</desc>
+            </attDef>
+          </attList>
+        </elementSpec>
+        
+        <!-- Customization of stage element -->
+        <elementSpec ident="stage" mode="change">
+          <desc>Stage direction element customized with bilingual correspondence attributes,
+            but requirements are enforced only via Schematron (not RNG).</desc>
+          <attList>
+            <!-- xml:lang optional in RNG, required only in Schematron for non-nested stage -->
+            <attDef ident="xml:lang" mode="change" usage="opt">
+              <desc>Language code restricted to English (eng) or Spanish (spa)</desc>
+              <valList type="closed">
+                <valItem ident="eng"/>
+                <valItem ident="spa"/>
+              </valList>
+            </attDef>
+            <!-- xml:id optional -->
+            <attDef ident="xml:id" mode="change" usage="opt">
+              <desc>Identifier (required only in Schematron for non-nested stage)</desc>
+            </attDef>
+            <!-- corresp optional -->
+            <attDef ident="corresp" mode="change" usage="opt">
+              <desc>Correspondence reference (required only in Schematron for non-nested stage)</desc>
+            </attDef>
+          </attList>
+        </elementSpec>
+        
+        <!-- Schematron constraints -->
+        <constraintSpec ident="bilingual-correspondence" scheme="schematron">
+          <desc>Schematron rules enforcing bilingual correspondence patterns</desc>
+          <constraint>
+            <sch:pattern>
+              <sch:title>Bilingual Correspondence Rules</sch:title>
+              
+              <!-- Rule for sp elements that are not children of other sp elements -->
+              <sch:rule context="tei:sp[not(parent::tei:sp)]">
+                <!-- All corresp values must begin with # -->
+                <sch:assert test="starts-with(@corresp, '#')"
+                  >The @corresp attribute must begin with a hash (#).</sch:assert>
+                
+                <!-- English sp elements must have xml:id ending with '_eng' -->
+                <sch:assert test="not(@xml:lang='eng') or ends-with(@xml:id, '_eng')"
+                  >English sp elements must have @xml:id ending with '_eng'.</sch:assert>
+                
+                <!-- English sp elements must have corresp ending with '_spa' -->
+                <sch:assert test="not(@xml:lang='eng') or ends-with(@corresp, '_spa')"
+                  >English sp elements must have @corresp ending with '_spa'.</sch:assert>
+                
+                <!-- Spanish sp elements must have xml:id ending with '_spa' -->
+                <sch:assert test="not(@xml:lang='spa') or ends-with(@xml:id, '_spa')"
+                  >Spanish sp elements must have @xml:id ending with '_spa'.</sch:assert>
+                
+                <!-- Spanish sp elements must have corresp ending with '_eng' -->
+                <sch:assert test="not(@xml:lang='spa') or ends-with(@corresp, '_eng')"
+                  >Spanish sp elements must have @corresp ending with '_eng'.</sch:assert>
+                
+                <!-- Correspondence consistency: xml:id and corresp should be identical except for language suffix -->
+                <sch:assert test="not(@xml:lang='eng') or substring(@xml:id, 1, string-length(@xml:id) - 4) = substring(@corresp, 2, string-length(@corresp) - 5)"
+                  >English sp: @xml:id and @corresp must be identical except for language suffixes (_eng vs _spa) and # prefix.</sch:assert>
+                
+                <sch:assert test="not(@xml:lang='spa') or substring(@xml:id, 1, string-length(@xml:id) - 4) = substring(@corresp, 2, string-length(@corresp) - 5)"
+                  >Spanish sp: @xml:id and @corresp must be identical except for language suffixes (_spa vs _eng) and # prefix.</sch:assert>
+              </sch:rule>
+              
+              <!-- Rule for stage elements that are NOT children of sp elements -->
+              <sch:rule context="tei:stage[not(parent::tei:sp)]">
+                <!-- Require xml:lang for non-nested stage elements -->
+                <sch:assert test="@xml:lang"
+                  >Stage elements not nested in sp must have @xml:lang.</sch:assert>
+                
+                <!-- Require xml:lang to be eng or spa for non-nested stage elements -->
+                <sch:assert test="not(@xml:lang) or @xml:lang='eng' or @xml:lang='spa'"
+                  >Stage elements not nested in sp must have @xml:lang value of 'eng' or 'spa'.</sch:assert>
+                
+                <!-- Require xml:id for non-nested stage elements -->
+                <sch:assert test="@xml:id"
+                  >Stage elements not nested in sp must have @xml:id.</sch:assert>
+                
+                <!-- Require corresp for non-nested stage elements -->
+                <sch:assert test="@corresp"
+                  >Stage elements not nested in sp must have @corresp.</sch:assert>
+                
+                <!-- All corresp values must begin with # -->
+                <sch:assert test="starts-with(@corresp, '#')"
+                  >The @corresp attribute must begin with a hash (#).</sch:assert>
+                
+                <!-- English stage elements must have xml:id ending with '_eng' -->
+                <sch:assert test="not(@xml:lang='eng') or ends-with(@xml:id, '_eng')"
+                  >English stage elements must have @xml:id ending with '_eng'.</sch:assert>
+                
+                <!-- English stage elements must have corresp ending with '_spa' -->
+                <sch:assert test="not(@xml:lang='eng') or ends-with(@corresp, '_spa')"
+                  >English stage elements must have @corresp ending with '_spa'.</sch:assert>
+                
+                <!-- Spanish stage elements must have xml:id ending with '_spa' -->
+                <sch:assert test="not(@xml:lang='spa') or ends-with(@xml:id, '_spa')"
+                  >Spanish stage elements must have @xml:id ending with '_spa'.</sch:assert>
+                
+                <!-- Spanish stage elements must have corresp ending with '_eng' -->
+                <sch:assert test="not(@xml:lang='spa') or ends-with(@corresp, '_eng')"
+                  >Spanish stage elements must have @corresp ending with '_eng'.</sch:assert>
+                
+                <!-- Correspondence consistency: xml:id and corresp should be identical except for language suffix -->
+                <sch:assert test="not(@xml:lang='eng') or substring(@xml:id, 1, string-length(@xml:id) - 4) = substring(@corresp, 2, string-length(@corresp) - 5)"
+                  >English stage: @xml:id and @corresp must be identical except for language suffixes (_eng vs _spa) and # prefix.</sch:assert>
+                
+                <sch:assert test="not(@xml:lang='spa') or substring(@xml:id, 1, string-length(@xml:id) - 4) = substring(@corresp, 2, string-length(@corresp) - 5)"
+                  >Spanish stage: @xml:id and @corresp must be identical except for language suffixes (_spa vs _eng) and # prefix.</sch:assert>
+              </sch:rule>
+              
+              <!-- ❌ Rule for stage[parent::tei:sp] removed -->
+            </sch:pattern>
+          </constraint>
+        </constraintSpec>
+        
+      </schemaSpec>
+    </body>
+  </text>
+</TEI>
