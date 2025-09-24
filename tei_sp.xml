@@ -129,7 +129,7 @@
               </sch:rule>
               
               <!-- Rule for stage elements that are NOT children of sp elements -->
-              <sch:rule context="tei:stage[not(parent::tei:sp)]">
+              <sch:rule context="tei:stage[not(ancestor::tei:sp)]">
                 <!-- Require xml:lang for non-nested stage elements -->
                 <sch:assert test="@xml:lang"
                   >Stage elements not nested in sp must have @xml:lang.</sch:assert>
