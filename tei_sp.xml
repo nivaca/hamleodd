@@ -67,6 +67,28 @@
           </attList>
         </elementSpec>
         
+        <!-- Allow textual-critical apparatus <app> directly inside <sp> -->
+        <elementSpec ident="sp" mode="change">
+          <content>
+            <rng:group xmlns:rng="http://relaxng.org/ns/structure/1.0">
+              <!-- speaker is optional, not required -->
+              <rng:optional>
+                <rng:ref name="speaker"/>
+              </rng:optional>
+              <rng:zeroOrMore>
+                <rng:choice>
+                  <rng:ref name="l"/>
+                  <rng:ref name="p"/>
+                  <rng:ref name="lg"/>
+                  <rng:ref name="stage"/>
+                  <rng:ref name="app"/>
+                </rng:choice>
+              </rng:zeroOrMore>
+            </rng:group>
+          </content>
+        </elementSpec>
+        
+        
         <!-- Customization of stage element -->
         <elementSpec ident="stage" mode="change">
           <desc>Stage direction element customized with bilingual correspondence attributes,
